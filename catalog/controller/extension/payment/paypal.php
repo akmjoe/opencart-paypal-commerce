@@ -593,7 +593,37 @@ class ControllerExtensionPaymentPayPal extends Controller {
 						
 						if (($authorization_status == 'CREATED') || ($authorization_status == 'DENIED') || ($authorization_status == 'PENDING')) {
 							$message = sprintf($this->language->get('text_order_message'), $seller_protection_status);
-				
+							
+							//add order to paypal table
+							$paypal_order_data = array(
+								'order_id'         => $this->session->data['order_id'],
+								'capture_status'   => 'NotComplete',
+								'currency_code'    => $result['purchase_units'][0]['payments']['authorizations'][0]['amount']['currency_code'],
+								'authorization_id' => $result['purchase_units'][0]['payments']['authorizations'][0]['id'],
+								'total'            => $result['purchase_units'][0]['payments']['authorizations'][0]['amount']['value']
+							);
+							
+							$paypal_order_id = $this->model_extension_payment_paypal->addOrder($paypal_order_data);
+							
+							//add transaction to paypal transaction table
+							$paypal_transaction_data = array(
+								'paypal_order_id'       => $paypal_order_id,
+								'transaction_id'        => $result['purchase_units'][0]['payments']['authorizations'][0]['id'],
+								'parent_id' => '',
+								'expiration_time'		=> date("Y-m-d H:i:s", strtotime($result['purchase_units'][0]['payments']['authorizations'][0]['expiration_time'])),
+								'note'                  => $message,
+								'msgsubid'              => '',
+								'receipt_id'            => '',
+								'payment_type'          => '',
+								'payment_status'        => $authorization_status,
+								'pending_reason'        => '',
+								'transaction_entity'    => 'auth',
+								'amount'                => $result['purchase_units'][0]['payments']['authorizations'][0]['amount']['value'],
+								'debug_data'            => json_encode($result)
+							);
+
+							$this->model_extension_payment_paypal->addTransaction($paypal_transaction_data);
+							
 							$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $order_status_id, $message);
 						}
 						
@@ -606,6 +636,7 @@ class ControllerExtensionPaymentPayPal extends Controller {
 					
 					if (isset($result['purchase_units'][0]['payments']['captures'][0]['status']) && isset($result['purchase_units'][0]['payments']['captures'][0]['seller_protection']['status'])) {
 						$capture_status = $result['purchase_units'][0]['payments']['captures'][0]['status'];
+						$capture_id = $result['purchase_units'][0]['payments']['captures'][0]['id'];
 						$seller_protection_status = $result['purchase_units'][0]['payments']['captures'][0]['seller_protection']['status'];
 						$order_status_id = 0;
 						
@@ -634,6 +665,36 @@ class ControllerExtensionPaymentPayPal extends Controller {
 						if (($capture_status == 'COMPLETED') || ($capture_status == 'DECLINED') || ($capture_status == 'PENDING')) {
 							$message = sprintf($this->language->get('text_order_message'), $seller_protection_status);
 				
+							//add order to paypal table
+							$paypal_order_data = array(
+								'order_id'         => $this->session->data['order_id'],
+								'capture_status'   => 'Complete',
+								'currency_code'    => $result['purchase_units'][0]['payments']['captures'][0]['amount']['currency_code'],
+								'authorization_id' => $result['purchase_units'][0]['payments']['captures'][0]['id'],
+								'total'            => $result['purchase_units'][0]['payments']['captures'][0]['amount']['value']
+							);
+							
+							$paypal_order_id = $this->model_extension_payment_paypal->addOrder($paypal_order_data);
+							
+							//add transaction to paypal transaction table
+							$paypal_transaction_data = array(
+								'paypal_order_id'       => $paypal_order_id,
+								'transaction_id'        => $result['purchase_units'][0]['payments']['captures'][0]['id'],
+								'parent_id' => '',
+								'expiration_time'		=> '',
+								'note'                  => $message,
+								'msgsubid'              => '',
+								'receipt_id'            => '',
+								'payment_type'          => '',
+								'payment_status'        => $authorization_status,
+								'pending_reason'        => '',
+								'transaction_entity'    => 'payment',
+								'amount'                => $result['purchase_units'][0]['payments']['captures'][0]['amount']['value'],
+								'debug_data'            => json_encode($result)
+							);
+
+							$this->model_extension_payment_paypal->addTransaction($paypal_transaction_data);
+							
 							$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $order_status_id, $message);
 						}
 						

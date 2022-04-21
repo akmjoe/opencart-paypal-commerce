@@ -24,4 +24,9 @@ class ModelExtensionPaymentPayPal extends Model {
 			$log->write('PayPal debug (' . $title . '): ' . json_encode($data));
 		}
 	}
+	
+	public function install() {
+		// add field to table
+		$this->db->query('ALTER TABLE '.DB_PREFIX.'paypal_order_transaction ADD expiration_time DATETIME AFTER date_added');
+	}
 }

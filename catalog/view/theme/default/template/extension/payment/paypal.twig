@@ -79,7 +79,8 @@
 }
 
 #paypal_card_form .card-info-number,
-#paypal_card_form .card-info-date-cvv {
+#paypal_card_form .card-info-date-cvv,
+#paypal_card_form .card-info-zip {
 	position: relative;
 	text-align: left;
 }
@@ -98,7 +99,8 @@
 
 #paypal_card_form .card-info-number,
 #paypal_card_form .card-info-date,
-#paypal_card_form .card-info-cvv {
+#paypal_card_form .card-info-cvv,
+#paypal_card_form .card-info-zip {
   transition: -webkit-transform 0.3s;
   transition: transform 0.3s;
   transition: transform 0.3s, -webkit-transform 0.3s;
@@ -329,6 +331,10 @@
 					<div id="cvv" class="card-input-container"></div>
 				</div>
 			</div>
+                        <div class="card-info-zip clearfix">
+                            <label for="card_zip" class="card-label">{{ entry_card_zip }}</label>
+                            <div id="card_zip" class="card-input-container"></div>
+                        </div>
 			<button id="paypal_button_submit" class="btn" value="submit">{{ button_pay }}</button>
 		</form>
 	</div>
@@ -449,7 +455,11 @@ function setupPayPal() {
 					expirationDate: {
 						selector: '#expiration_date',
 						placeholder: 'MM / YYYY'
-					}
+					},
+                                        postalCode: {
+                                                selector: '#card_zip',
+                                                placeholder: '#####'  
+                                        }
 				},
 				createOrder: function(data, actions) {
 					paypal_order_id = false;

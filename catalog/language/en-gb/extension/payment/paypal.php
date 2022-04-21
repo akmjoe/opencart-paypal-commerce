@@ -10,6 +10,7 @@ $_['text_order_message']					= 'PayPal Seller Protection - %s';
 $_['entry_card_number']						= 'Card Number';
 $_['entry_expiration_date']					= 'Expiration Date';
 $_['entry_cvv']								= 'CVV';
+$_['entry_card_zip']						= 'Billing Postal Code';
 
 // Button
 $_['button_pay']							= 'Pay with Card';

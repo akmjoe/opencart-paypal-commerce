@@ -84,6 +84,8 @@
 										</style>
 										<a id="button_connect_ppcp" href="{{ configure_url[environment]['ppcp'] }}" target="_blank" data-paypal-button="PPLtBlue" data-paypal-onboard-complete="onBoardedCallback">{{ button_connect }}</a><br />
 										<p>{{ help_checkout_express }}</p>
+                                                                                <br>
+                                                                                <button id="button_advanced" type="button" data-toggle="collapse" data-target="#section_advanced">{{ button_advanced }}</button>
 									</div>
 									{% if client_id and secret and merchant_id %}
 									<div id="section_disconnect">
@@ -91,12 +93,35 @@
 										<a id="button_disconnect" class="btn btn-danger">{{ button_disconnect }}</a>
 									</div>
 									{% endif %}
-									<input type="hidden" name="payment_paypal_client_id" value="{{ client_id }}" id="input_client_id" />
-									<input type="hidden" name="payment_paypal_secret" value="{{ secret }}" id="input_secret" />
-									<input type="hidden" name="payment_paypal_merchant_id" value="{{ merchant_id }}" id="input_merchant_id" />
-									<input type="hidden" name="payment_paypal_webhook_id" value="{{ webhook_id }}" id="input_webhook_id" />
+                                                                        
 								</div>
 							</div>
+                                                        <div id="section_advanced" class="collapse collapsed">
+                                                            <div class="form-group">
+                                                                <label class="col-sm-2 control-label" for="input_client_id"><span data-toggle="tooltip" title="{{ help_checkout_express_client_id }}">{{ entry_checkout_express_client_id }}</span></label>
+								<div class="col-sm-10">
+                                                                    <input type="text" name="payment_paypal_client_id" value="{{ client_id }}" id="input_client_id" />
+								</div>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label class="col-sm-2 control-label" for="input_secret"><span data-toggle="tooltip" title="{{ help_checkout_express_secret }}">{{ entry_checkout_express_secret }}</span></label>
+								<div class="col-sm-10">
+									<input type="text" name="payment_paypal_secret" value="{{ secret }}" id="input_secret" />
+								</div>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label class="col-sm-2 control-label" for="input_merchant_id"><span data-toggle="tooltip" title="{{ help_checkout_express_merchant_id }}">{{ entry_checkout_express_merchant_id }}</span></label>
+								<div class="col-sm-10">
+									<input type="text" name="payment_paypal_merchant_id" value="{{ merchant_id }}" id="input_merchant_id" />
+								</div>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label class="col-sm-2 control-label" for="input_webhook_id"><span data-toggle="tooltip" title="{{ help_checkout_express_webhook_id }}">{{ entry_checkout_express_webhook_id }}</span></label>
+								<div class="col-sm-10">
+									<input type="text" name="payment_paypal_webhook_id" value="{{ webhook_id }}" id="input_webhook_id" />
+								</div>
+                                                            </div>
+                                                        </div>
 							{% if client_id and secret and merchant_id %}
 							<div class="form-group">
 								<label class="col-sm-2 control-label" for="input_checkout_express_status"><span data-toggle="tooltip" title="{{ help_checkout_express_status }}">{{ entry_checkout_express_status }}</span></label>
@@ -566,7 +591,12 @@ function onBoardedCallback(authorization_code, shared_id) {
 		data: 'environment=' + environment + '&authorization_code=' + authorization_code + '&shared_id=' + shared_id + '&seller_nonce={{ seller_nonce }}',
 		dataType: 'json',
 		success: function(json) {
-			
+                        console.log("Onboarded success:");
+			console.log(json);
+                        // set values
+                        $('#input_secret').val(json['secret']);
+                        $('#input_client_id').val(json['client_id']);
+                        $('#input_merchant_id').val(json['merchant_id']);
 		},
 		error: function(xhr, ajaxOptions, thrownError) {
 			console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);

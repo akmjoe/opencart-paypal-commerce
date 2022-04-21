@@ -56,7 +56,7 @@ class ControllerExtensionPaymentPayPal extends Controller {
 		
 		$data['setting'] = $_config->get('paypal_setting');
 					
-		if (isset($this->session->data['environment']) && isset($this->session->data['authorization_code']) && isset($this->session->data['shared_id']) && isset($this->session->data['seller_nonce']) && isset($this->request->get['merchantIdInPayPal'])) {						
+		if (isset($this->session->data['environment']) && isset($this->session->data['authorization_code']) && isset($this->session->data['shared_id']) && isset($this->session->data['seller_nonce'])) {						
 			$environment = $this->session->data['environment'];
 			
 			require_once DIR_SYSTEM . 'library/paypal/paypal.php';
@@ -79,12 +79,15 @@ class ControllerExtensionPaymentPayPal extends Controller {
 											
 			$result = $paypal->getSellerCredentials($data['setting']['partner'][$environment]['partner_id']);
 			
+			$this->model_extension_payment_paypal->log($result, 'getSellerCredentials');
+			
 			$client_id = '';
 			$secret = '';
 			
 			if (isset($result['client_id']) && isset($result['client_secret'])) {
 				$client_id = $result['client_id'];
 				$secret = $result['client_secret'];
+				$merchant_id = $result['payer_id'];
 			}
 			
 			$paypal_info = array(
@@ -147,14 +150,14 @@ class ControllerExtensionPaymentPayPal extends Controller {
 				$this->error['warning'] = implode(' ', $error_messages);
 			}
    			
-			$merchant_id = $this->request->get['merchantIdInPayPal'];
+			//$merchant_id = $this->request->get['merchantIdInPayPal'];
 			
 			$setting = $this->model_setting_setting->getSetting('payment_paypal');
 						
 			$setting['payment_paypal_environment'] = $environment;
 			$setting['payment_paypal_client_id'] = $client_id;
 			$setting['payment_paypal_secret'] = $secret;
-			$setting['payment_paypal_merchant_id'] = $merchant_id;
+			$setting['payment_paypal_merchant_id'] = isset($merchant_id)?$merchant_id:'';
 			$setting['payment_paypal_webhook_id'] = $webhook_id;
 
 			$this->model_setting_setting->editSetting('payment_paypal', $setting);
@@ -341,7 +344,7 @@ class ControllerExtensionPaymentPayPal extends Controller {
 						$error_messages[] = $error['message'];
 					}
 					
-					$this->model_extension_payment_paypal->log($error, $error['message']);
+					$this->log->write($error);
 				}
 				
 				$this->error['warning'] = implode(' ', $error_messages);
@@ -359,6 +362,11 @@ class ControllerExtensionPaymentPayPal extends Controller {
 		$data['footer'] = $this->load->controller('common/footer');
 
 		$this->response->setOutput($this->load->view('extension/payment/paypal', $data));
+	}
+	
+	public function install() {
+		$this->load->model('extension/payment/paypal');
+		$this->model_extension_payment_paypal->install();
 	}
 	
 	public function disconnect() {
@@ -379,11 +387,52 @@ class ControllerExtensionPaymentPayPal extends Controller {
 	}
 		
 	public function callback() {
+		$this->load->model('extension/payment/paypal');
 		if (isset($this->request->post['environment']) && isset($this->request->post['authorization_code']) && isset($this->request->post['shared_id']) && isset($this->request->post['seller_nonce'])) {
 			$this->session->data['environment'] = $this->request->post['environment'];
 			$this->session->data['authorization_code'] = $this->request->post['authorization_code'];
 			$this->session->data['shared_id'] = $this->request->post['shared_id'];
 			$this->session->data['seller_nonce'] = $this->request->post['seller_nonce'];
+			
+			// Setting 		
+			$_config = new Config();
+			$_config->load('paypal');
+
+			$data['setting'] = $_config->get('paypal_setting');
+			
+			$environment = $this->session->data['environment'];
+			
+			require_once DIR_SYSTEM . 'library/paypal/paypal.php';
+			
+			$paypal_info = array(
+				'client_id' => $this->session->data['shared_id'],
+				'environment' => $environment,
+				'partner_attribution_id' => $data['setting']['partner'][$environment]['partner_attribution_id']
+			);
+					
+			$paypal = new PayPal($paypal_info);
+			
+			$token_info = array(
+				'grant_type' => 'authorization_code',
+				'code' => $this->session->data['authorization_code'],
+				'code_verifier' => $this->session->data['seller_nonce']
+			);
+			
+			$paypal->setAccessToken($token_info);
+											
+			$result = $paypal->getSellerCredentials($data['setting']['partner'][$environment]['partner_id']);
+			
+			$this->model_extension_payment_paypal->log($result, 'getSellerCredentials');
+			
+			$data = array();
+			
+			if (isset($result['client_id']) && isset($result['client_secret'])) {
+				$data['client_id'] = $result['client_id'];
+				$data['secret'] = $result['client_secret'];
+				$data['merchant_id'] = $result['payer_id'];
+			}
+		} else {
+			$this->model_extension_payment_paypal->log($this->request->post, 'Paypal admin callback error');
 		}
 		
 		$data['error'] = $this->error;
@@ -402,6 +451,10 @@ class ControllerExtensionPaymentPayPal extends Controller {
 	protected function validate() {
 		if (!$this->user->hasPermission('modify', 'extension/payment/paypal')) {
 			$this->error['warning'] = $this->language->get('error_permission');
+		}
+		
+		if(!(int)$this->request->post['payment_paypal_status']) {
+			return true;
 		}
 		
 		// Setting 		
@@ -435,6 +488,8 @@ class ControllerExtensionPaymentPayPal extends Controller {
 			foreach ($errors as $error) {
 				if (isset($error['name']) && ($error['name'] == 'CURLE_OPERATION_TIMEOUTED')) {
 					$error['message'] = $this->language->get('error_timeout');
+				} elseif(isset($error['error_description'])) {
+					$error['message'] = $error['error_description'];
 				}
 				
 				if (isset($error['details'][0]['description'])) {

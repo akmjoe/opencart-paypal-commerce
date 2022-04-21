@@ -131,6 +131,10 @@ $_['entry_message_text_color'] 			= 'Message Text Color';
 $_['entry_message_text_size'] 			= 'Message Text Size';
 $_['entry_message_flex_color'] 			= 'Message Banner Color';
 $_['entry_message_flex_ratio'] 			= 'Message Banner Ratio';
+$_['entry_checkout_express_client_id']	= 'Client ID';
+$_['entry_checkout_express_secret']		= 'Client Secret';
+$_['entry_checkout_express_merchant_id']= 'Merchant ID';
+$_['entry_checkout_express_webhook_id']	= 'Webhook ID';
 
 // Help
 $_['help_checkout_express']				= 'If your country is not available in the list when going through the PayPal onboarding experience please <a id="button_connect_express_checkout" href="%s" target="_blank" data-paypal-button="PPLtBlue" data-paypal-onboard-complete="onBoardedCallback">click here</a>.';
@@ -144,11 +148,16 @@ $_['help_card_currency_code']		 	= 'Select the default currency for PayPal Card.
 $_['help_card_currency_value']		 	= 'Set to 1.00000 if this is your default currency.';
 $_['help_secure_status'] 				= '3D Secure enables you to authenticate card holders through card issuers. It reduces the likelihood of fraud when you use supported cards and improves transaction perfomance. A successful 3D Secure authentication can shift liability for chargebacks due to fraud from you -the merchant- to the card issuer.';
 $_['help_secure_scenario'] 				= '3D Secure authentication is perfomed only if the card is enrolled for the service. In scenarios where the 3D Secure authentication has not been successful, you have the option to complete the payment at your own risk, meaning that you -the merchant- will be liable in case of a chargeback.';
+$_['help_checkout_express_client_id']	= '';
+$_['help_checkout_express_secret']		= '';
+$_['help_checkout_express_merchant_id']	= '';
+$_['help_checkout_express_webhook_id']	= '';
 
 // Button
 $_['button_connect'] 					= 'Connect with PayPal';
 $_['button_disconnect'] 				= 'Disconnect';
 $_['button_smart_button']				= 'Smart Button Configure';
+$_['button_advanced']					= 'Show Advanced';
 
 // Success
 $_['success_save']		 				= 'Success: You have modified PayPal!';

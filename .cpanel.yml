@@ -1,0 +1,8 @@
+---
+deployment:
+    tasks:
+        - export DEPLOYPATH=/home/ussander/opencart/
+        - /bin/cp -R admin/. "$DEPLOYPATH"admin/
+        - /bin/cp -R system/. "$DEPLOYPATH"system/
+        - /bin/cp -R catalog/. "$DEPLOYPATH"catalog/
+        - /bin/cp install.xml "$DEPLOYPATH"system/opencart-paypal-commerce.ocmod.xml

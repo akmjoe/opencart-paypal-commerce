@@ -74,6 +74,43 @@ $_['paypal_smart_button_setting'] = array(
 			'message_text_size' => '12',
 			'message_flex_color' => 'blue',
 			'message_flex_ratio' => '8x1'
+		),
+		'checkout' => array(
+			'code' => 'checkout',
+			'name' => 'text_checkout_page',
+			'status' => true,
+			'insert_tag' => '#button-account',
+			'insert_type' => 'append',
+			'button_align' => 'right',
+			'button_size' => 'large',
+			'button_color' => 'gold',
+			'button_shape' => 'rect',
+			'button_label' => 'paypal',
+			'button_tagline' => 'false',
+			'button_funding' => array(
+				'card' => 0,
+				'credit' => 0,
+				'bancontact' => 0,
+				'blik' => 0,
+				'eps' => 0,
+				'giropay' => 0,
+				'ideal' => 0,
+				'mercadopago' => 0,
+				'mybank' => 0,
+				'p24' => 0,
+				'sepa' => 0,
+				'sofort' => 0,
+				'venmo' => 0,
+				'paylater' => 0
+			),
+			'message_status' => true,
+			'message_align' => 'right',
+			'message_size' => 'large',
+			'message_layout' => 'text',
+			'message_text_color' => 'black',
+			'message_text_size' => '12',
+			'message_flex_color' => 'blue',
+			'message_flex_ratio' => '8x1'
 		)
 	),
 	'insert_type' => array(

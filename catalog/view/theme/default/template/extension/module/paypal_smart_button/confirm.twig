@@ -65,7 +65,7 @@
 									{% if payment_address['zone'] %}<tr><td><b>{{ entry_zone }}</b></td><td>{{ payment_address['zone'] }}</td></tr>{% endif %}
 									{% for custom_field in custom_fields %}
 									{% if custom_field['location'] == 'address' %}
-									<tr><td><b>{{ custom_field['name'] }}</b></td><td>{{ custom_field['value'] }}</td></tr>
+									<tr><td><b>{{ custom_field['name'] }}</b></td><td>{{ payment_address.custom_field[custom_field.custom_field_id] }}</td></tr>
 									{% endif %}
 									{% endfor %}
 								</table>
@@ -92,7 +92,7 @@
 						{% if shipping_address['zone'] %}<tr><td><b>{{ entry_zone }}</b></td><td>{{ shipping_address['zone'] }}</td></tr>{% endif %}	
 						{% for custom_field in custom_fields %}
 						{% if custom_field['location'] == 'address' %}
-						<tr><td><b>{{ custom_field['name'] }}</b></td><td>{{ custom_field['value'] }}</td></tr>
+						<tr><td><b>{{ custom_field['name'] }}</b></td><td>{{ shipping_address.custom_field[custom_field.custom_field_id] }}</td></tr>
 						{% endif %}
 						{% endfor %}
 					</table>
@@ -134,7 +134,7 @@
 			</form>
 			{% endif %}
 			{% endif %}
-			<div class="panel panel-default">
+			<div class="panel panel-default hidden">
 				<div class="panel-heading">
 					<h4 class="panel-title">{{ text_checkout_payment_method }}</h4>
 				</div>

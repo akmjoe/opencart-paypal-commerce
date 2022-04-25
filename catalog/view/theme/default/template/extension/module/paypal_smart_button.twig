@@ -107,8 +107,11 @@ function paypalReady() {
 		setupPayPalSmartButton();
 	}
 }
-
+{% if ajax %}
+function paypalAjaxLoaded() {
+{% else %}
 window.addEventListener('load', function () {
+{% endif %}
 	if ($('{{ insert_tag }}').length) {
 		var html = '<div id="paypal_form"><div id="paypal_smart_button" class="buttons clearfix"><div id="paypal_smart_button_container"></div></div>';
 		
@@ -135,6 +138,10 @@ window.addEventListener('load', function () {
 			setupPayPalSmartButton();
 		}
 	}
+{% if ajax %}
+}
+{% else %}
 });
+{% endif %}
 
 </script>

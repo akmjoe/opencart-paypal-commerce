@@ -138,8 +138,8 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 				$status = true;
 			}
 			
-			if ($setting['page']['checkout']['status'] && ($this->request->get['route'] == 'checkout/login') && $this->cart->getTotal()) {
-				$data['insert_tag'] = html_entity_decode($setting['page']['cart']['insert_tag']);
+			if ($setting['page']['checkout']['status'] && ($this->request->get['route'] == 'checkout/checkout') && $this->cart->getTotal()) {
+				$data['insert_tag'] = html_entity_decode($setting['page']['checkout']['insert_tag']);
 				$data['insert_type'] = $setting['page']['checkout']['insert_type'];
 				$data['button_align'] = $setting['page']['checkout']['button_align'];
 				$data['button_size'] = $setting['page']['checkout']['button_size'];
@@ -596,7 +596,7 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 					$this->load->model('account/custom_field');
 
 					$custom_fields = $this->model_account_custom_field->getCustomFields();
-					$this->log->write($custom_fields);
+					
 					foreach($custom_fields as $field) {
 						if(strtolower($field['name']) == 'phone' && $field['location'] == 'address') {
 							$this->session->data['shipping_address']['custom_field'][$field['custom_field_id']] = $this->session->data['guest']['telephone'];
@@ -605,7 +605,7 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 							$this->session->data['shipping_address']['custom_field'][$field['custom_field_id']] = $this->session->data['guest']['email'];
 						}
 					}
-					$this->log->write($this->session->data['shipping_address']['custom_field']);
+					
 									
 					if (isset($paypal_order_info['purchase_units'][0]['shipping']['address']['country_code'])) {
 						$country_info = $this->model_extension_module_paypal_smart_button->getCountryByCode($paypal_order_info['purchase_units'][0]['shipping']['address']['country_code']);

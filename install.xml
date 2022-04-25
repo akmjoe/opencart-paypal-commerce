@@ -5,4 +5,22 @@
     <author>Joe Rothrock</author>
     <link>https://github.com/akmjoe</link>
     <code>opencart-paypal-commerce</code>
+    <file path="catalog/view/theme/*/template/checkout/login.twig">
+        <operation error="skip" info="To add paypal button to checkout options">
+            <search><![CDATA[<p>{{ text_register_account }}</p>]]></search>
+            <add position="before"><![CDATA[{% if paypal %}{{ paypal }}{% endif %}]]></add>
+        </operation>
+    </file>
+    <file path="catalog/view/theme/*/template/checkout/checkout.twig">
+        <operation error="skip" info="To add paypal button to checkout options">
+            <search><![CDATA[$('a[href=\'#collapse-checkout-option\']').trigger('click');]]></search>
+            <add position="after"><![CDATA[if(typeof paypalAjaxLoaded === "function") paypalAjaxLoaded();]]></add>
+        </operation>
+    </file>
+    <file path="catalog/controller/checkout/login.php">
+        <operation error="skip" info="To add paypal button to checkout options">
+            <search><![CDATA[$data['forgotten'] = ]]></search>
+            <add position="after"><![CDATA[$data['paypal'] = $this->load->controller('extension/module/paypal_smart_button');]]></add>
+        </operation>
+    </file>
 </modification>

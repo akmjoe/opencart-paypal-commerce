@@ -138,6 +138,53 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 				$status = true;
 			}
 			
+			if ($setting['page']['checkout']['status'] && ($this->request->get['route'] == 'checkout/login') && $this->cart->getTotal()) {
+				$data['insert_tag'] = html_entity_decode($setting['page']['cart']['insert_tag']);
+				$data['insert_type'] = $setting['page']['checkout']['insert_type'];
+				$data['button_align'] = $setting['page']['checkout']['button_align'];
+				$data['button_size'] = $setting['page']['checkout']['button_size'];
+				$data['button_color'] = $setting['page']['checkout']['button_color'];
+				$data['button_shape'] = $setting['page']['checkout']['button_shape'];
+				$data['button_label'] = $setting['page']['checkout']['button_label'];
+				$data['button_tagline'] = $setting['page']['checkout']['button_tagline'];
+				
+				$data['button_enable_funding'] = array();
+				$data['button_disable_funding'] = array();
+				
+				foreach ($setting['button_funding'] as $button_funding) {
+					if ($setting['page']['checkout']['button_funding'][$button_funding['code']] == 1) {
+						$data['button_enable_funding'][] = $button_funding['code'];
+					} 
+				
+					if ($setting['page']['checkout']['button_funding'][$button_funding['code']] == 2) {
+						$data['button_disable_funding'][] = $button_funding['code'];
+					}
+				}
+				
+				$data['message_status'] = $setting['page']['checkout']['message_status'];
+				$data['message_align'] = $setting['page']['checkout']['message_align'];
+				$data['message_size'] = $setting['page']['checkout']['message_size'];
+				$data['message_layout'] = $setting['page']['checkout']['message_layout'];
+				$data['message_text_color'] = $setting['page']['checkout']['message_text_color'];
+				$data['message_text_size'] = $setting['page']['checkout']['message_text_size'];
+				$data['message_flex_color'] = $setting['page']['checkout']['message_flex_color'];
+				$data['message_flex_ratio'] = $setting['page']['checkout']['message_flex_ratio'];
+				$data['message_placement'] = 'checkout';
+				
+				$item_total = 0;
+								
+				foreach ($this->cart->getProducts() as $product) {
+					$product_price = $this->tax->calculate($product['price'], $product['tax_class_id'], true);
+									
+					$item_total += $product_price * $product['quantity'];
+				}
+			
+				$data['message_amount'] = number_format($item_total * $currency_value, $decimal_place, '.', '');
+					
+				$status = true;
+				$data['ajax'] = true;
+			}
+			
 			if ($status) {				
 				$this->load->model('localisation/country');
 		
@@ -517,35 +564,8 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 				$this->session->data['guest']['firstname'] = (isset($paypal_order_info['payer']['name']['given_name']) ? $paypal_order_info['payer']['name']['given_name'] : '');
 				$this->session->data['guest']['lastname'] = (isset($paypal_order_info['payer']['name']['surname']) ? $paypal_order_info['payer']['name']['surname'] : '');
 				$this->session->data['guest']['email'] = (isset($paypal_order_info['payer']['email_address']) ? $paypal_order_info['payer']['email_address'] : '');
-				$this->session->data['guest']['telephone'] = '';
+				$this->session->data['guest']['telephone'] = isset($paypal_order_info['payer']['phone']['phone_number'])?$paypal_order_info['payer']['phone']['phone_number']['national_number']:'';
 				$this->session->data['guest']['custom_field'] = array();
-			}
-								
-			if ($this->customer->isLogged() && $this->customer->getAddressId()) {
-				$this->session->data['payment_address'] = $this->model_account_address->getAddress($this->customer->getAddressId());
-			} else {
-				$this->session->data['payment_address']['firstname'] = (isset($paypal_order_info['payer']['name']['given_name']) ? $paypal_order_info['payer']['name']['given_name'] : '');
-				$this->session->data['payment_address']['lastname'] = (isset($paypal_order_info['payer']['name']['surname']) ? $paypal_order_info['payer']['name']['surname'] : '');
-				$this->session->data['payment_address']['company'] = '';
-				$this->session->data['payment_address']['address_1'] = '';
-				$this->session->data['payment_address']['address_2'] = '';
-				$this->session->data['payment_address']['city'] = '';
-				$this->session->data['payment_address']['postcode'] = '';
-				$this->session->data['payment_address']['country'] = '';
-				$this->session->data['payment_address']['country_id'] = '';
-				$this->session->data['payment_address']['address_format'] = '';
-				$this->session->data['payment_address']['zone'] = '';
-				$this->session->data['payment_address']['zone_id'] = '';
-				$this->session->data['payment_address']['custom_field'] = array();
-			
-				if (isset($paypal_order_info['payer']['address']['country_code'])) {
-					$country_info = $this->model_extension_module_paypal_smart_button->getCountryByCode($paypal_order_info['payer']['address']['country_code']);
-			
-					if ($country_info) {
-						$this->session->data['payment_address']['country'] = $country_info['name'];
-						$this->session->data['payment_address']['country_id'] = $country_info['country_id'];
-					}
-				}
 			}
 				
 			if ($this->cart->hasShipping()) {
@@ -572,6 +592,20 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 					$this->session->data['shipping_address']['zone'] = '';
 					$this->session->data['shipping_address']['zone_id'] = '';
 					$this->session->data['shipping_address']['custom_field'] = array();
+					// set custom fields as available
+					$this->load->model('account/custom_field');
+
+					$custom_fields = $this->model_account_custom_field->getCustomFields();
+					$this->log->write($custom_fields);
+					foreach($custom_fields as $field) {
+						if(strtolower($field['name']) == 'phone' && $field['location'] == 'address') {
+							$this->session->data['shipping_address']['custom_field'][$field['custom_field_id']] = $this->session->data['guest']['telephone'];
+						}
+						if(strtolower($field['name']) == 'email' && $field['location'] == 'address') {
+							$this->session->data['shipping_address']['custom_field'][$field['custom_field_id']] = $this->session->data['guest']['email'];
+						}
+					}
+					$this->log->write($this->session->data['shipping_address']['custom_field']);
 									
 					if (isset($paypal_order_info['purchase_units'][0]['shipping']['address']['country_code'])) {
 						$country_info = $this->model_extension_module_paypal_smart_button->getCountryByCode($paypal_order_info['purchase_units'][0]['shipping']['address']['country_code']);
@@ -579,6 +613,8 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 						if ($country_info) {
 							$this->session->data['shipping_address']['country_id'] = $country_info['country_id'];
 							$this->session->data['shipping_address']['country'] = $country_info['name'];
+							$this->session->data['shipping_address']['iso_code_2'] = $country_info['iso_code_2'];
+							$this->session->data['shipping_address']['iso_code_3'] = $country_info['iso_code_3'];
 							$this->session->data['shipping_address']['address_format'] = $country_info['address_format'];
 													
 							if (isset($paypal_order_info['purchase_units'][0]['shipping']['address']['admin_area_1'])) {
@@ -587,9 +623,53 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 								if ($zone_info) {
 									$this->session->data['shipping_address']['zone_id'] = $zone_info['zone_id'];
 									$this->session->data['shipping_address']['zone'] = $zone_info['name'];
+									$this->session->data['shipping_address']['zone_code'] = $zone_info['code'];
 								}
 							}
 						}
+					}
+				}
+			}
+						
+			if ($this->customer->isLogged() && $this->customer->getAddressId()) {
+				$this->session->data['payment_address'] = $this->model_account_address->getAddress($this->customer->getAddressId());
+			} else {
+				$this->session->data['payment_address']['firstname'] = (isset($paypal_order_info['payer']['name']['given_name']) ? $paypal_order_info['payer']['name']['given_name'] : '');
+				$this->session->data['payment_address']['lastname'] = (isset($paypal_order_info['payer']['name']['surname']) ? $paypal_order_info['payer']['name']['surname'] : '');
+				$this->session->data['payment_address']['company'] = '';
+				$this->session->data['payment_address']['address_1'] = isset($this->session->data['shipping_address']['address_1'])?$this->session->data['shipping_address']['address_1']:'';
+				$this->session->data['payment_address']['address_2'] = isset($this->session->data['shipping_address']['address_2'])?$this->session->data['shipping_address']['address_2']:'';
+				$this->session->data['payment_address']['city'] = isset($this->session->data['shipping_address']['city'])?$this->session->data['shipping_address']['city']:'';
+				$this->session->data['payment_address']['postcode'] = isset($this->session->data['shipping_address']['postcode'])?$this->session->data['shipping_address']['postcode']:'';
+				$this->session->data['payment_address']['country'] = isset($this->session->data['shipping_address']['country'])?$this->session->data['shipping_address']['country']:'';
+				$this->session->data['payment_address']['country_id'] = isset($this->session->data['shipping_address']['country_id'])?$this->session->data['shipping_address']['country_id']:'';
+				$this->session->data['payment_address']['iso_code_2'] = isset($this->session->data['shipping_address']['iso_code_2'])?$this->session->data['shipping_address']['iso_code_2']:'';
+				$this->session->data['payment_address']['address_format'] = isset($this->session->data['shipping_address']['address_format'])?$this->session->data['shipping_address']['address_format']:'';
+				$this->session->data['payment_address']['zone'] = isset($this->session->data['shipping_address']['zone'])?$this->session->data['shipping_address']['zone']:'';
+				$this->session->data['payment_address']['zone_id'] = isset($this->session->data['shipping_address']['zone_id'])?$this->session->data['shipping_address']['zone_id']:'';
+				$this->session->data['payment_address']['zone_code'] = isset($this->session->data['shipping_address']['zone_code'])?$this->session->data['shipping_address']['zone_code']:'';
+				$this->session->data['payment_address']['custom_field'] = array();
+				// set custom fields as available
+				$this->load->model('account/custom_field');
+
+				$custom_fields = $this->model_account_custom_field->getCustomFields();
+				foreach($custom_fields as $field) {
+					if(strtolower($field['name']) == 'phone' && $field['location'] == 'address') {
+						$this->session->data['payment_address']['custom_field'][$field['custom_field_id']] = $this->session->data['guest']['telephone'];
+					}
+					if(strtolower($field['name']) == 'email' && $field['location'] == 'address') {
+						$this->session->data['payment_address']['custom_field'][$field['custom_field_id']] = $this->session->data['guest']['email'];
+					}
+				}
+			
+				if (isset($paypal_order_info['payer']['address']['country_code'])) {
+					$country_info = $this->model_extension_module_paypal_smart_button->getCountryByCode($paypal_order_info['payer']['address']['country_code']);
+			
+					if ($country_info) {
+						$this->session->data['payment_address']['country'] = $country_info['name'];
+						$this->session->data['payment_address']['country_id'] = $country_info['country_id'];
+						$this->session->data['payment_address']['iso_code_2'] = $country_info['iso_code_2'];
+						$this->session->data['payment_address']['iso_code_3'] = $country_info['iso_code_3'];
 					}
 				}
 			}
@@ -1559,6 +1639,37 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 							if (($authorization_status == 'CREATED') || ($authorization_status == 'PARTIALLY_CAPTURED') || ($authorization_status == 'PARTIALLY_CREATED') || ($authorization_status == 'VOIDED') || ($authorization_status == 'PENDING')) {
 								$this->response->redirect($this->url->link('checkout/success', '', true));
 							}
+							
+							$this->load->model('extension/payment/paypal');
+							//add order to paypal table
+							$paypal_order_data = array(
+								'order_id'         => $this->session->data['order_id'],
+								'capture_status'   => 'NotComplete',
+								'currency_code'    => $result['purchase_units'][0]['payments']['authorizations'][0]['amount']['currency_code'],
+								'authorization_id' => $result['purchase_units'][0]['payments']['authorizations'][0]['id'],
+								'total'            => $result['purchase_units'][0]['payments']['authorizations'][0]['amount']['value']
+							);
+
+							$paypal_order_id = $this->model_extension_payment_paypal->addOrder($paypal_order_data);
+
+							//add transaction to paypal transaction table
+							$paypal_transaction_data = array(
+								'paypal_order_id'       => $paypal_order_id,
+								'transaction_id'        => $result['purchase_units'][0]['payments']['authorizations'][0]['id'],
+								'parent_id' => '',
+								'expiration_time'		=> date("Y-m-d H:i:s", strtotime($result['purchase_units'][0]['payments']['authorizations'][0]['expiration_time'])),
+								'note'                  => isset($message)?$message:'',
+								'msgsubid'              => '',
+								'receipt_id'            => '',
+								'payment_type'          => '',
+								'payment_status'        => $authorization_status,
+								'pending_reason'        => '',
+								'transaction_entity'    => 'auth',
+								'amount'                => $result['purchase_units'][0]['payments']['authorizations'][0]['amount']['value'],
+								'debug_data'            => json_encode($result)
+							);
+
+							$this->model_extension_payment_paypal->addTransaction($paypal_transaction_data);
 						}
 					} else {
 						$this->model_extension_module_paypal_smart_button->log($result, 'Capture Order');
@@ -1592,13 +1703,45 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 						
 							if (($capture_status == 'COMPLETED') || ($capture_status == 'DECLINED') || ($capture_status == 'PENDING')) {
 								$message = sprintf($this->language->get('text_order_message'), $seller_protection_status);
-				
+							
 								$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $order_status_id, $message);
 							}
 						
 							if (($capture_status == 'COMPLETED') || ($capture_status == 'PARTIALLY_REFUNDED') || ($capture_status == 'REFUNDED') || ($capture_status == 'PENDING')) {
 								$this->response->redirect($this->url->link('checkout/success', '', true));
 							}
+							
+							$this->load->model('extension/payment/paypal');
+								
+							//add order to paypal table
+							$paypal_order_data = array(
+								'order_id'         => $this->session->data['order_id'],
+								'capture_status'   => 'Complete',
+								'currency_code'    => $result['purchase_units'][0]['payments']['captures'][0]['amount']['currency_code'],
+								'authorization_id' => $result['purchase_units'][0]['payments']['captures'][0]['id'],
+								'total'            => $result['purchase_units'][0]['payments']['captures'][0]['amount']['value']
+							);
+
+							$paypal_order_id = $this->model_extension_payment_paypal->addOrder($paypal_order_data);
+
+							//add transaction to paypal transaction table
+							$paypal_transaction_data = array(
+								'paypal_order_id'       => $paypal_order_id,
+								'transaction_id'        => $result['purchase_units'][0]['payments']['captures'][0]['id'],
+								'parent_id' => '',
+								'expiration_time'		=> '',
+								'note'                  => isset($message)?$message:'',
+								'msgsubid'              => '',
+								'receipt_id'            => '',
+								'payment_type'          => '',
+								'payment_status'        => $capture_status,
+								'pending_reason'        => '',
+								'transaction_entity'    => 'payment',
+								'amount'                => $result['purchase_units'][0]['payments']['captures'][0]['amount']['value'],
+								'debug_data'            => json_encode($result)
+							);
+
+							$this->model_extension_payment_paypal->addTransaction($paypal_transaction_data);
 						}
 					}
 				}

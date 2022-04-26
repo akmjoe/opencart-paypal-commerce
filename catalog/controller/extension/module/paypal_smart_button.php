@@ -1629,16 +1629,6 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 							if ($authorization_status == 'PENDING') {
 								$order_status_id = $setting['order_status']['pending']['id'];
 							}
-						
-							if (($authorization_status == 'CREATED') || ($authorization_status == 'DENIED') || ($authorization_status == 'PENDING')) {
-								$message = sprintf($this->language->get('text_order_message'), $seller_protection_status);
-				
-								$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $order_status_id, $message);
-							}
-						
-							if (($authorization_status == 'CREATED') || ($authorization_status == 'PARTIALLY_CAPTURED') || ($authorization_status == 'PARTIALLY_CREATED') || ($authorization_status == 'VOIDED') || ($authorization_status == 'PENDING')) {
-								$this->response->redirect($this->url->link('checkout/success', '', true));
-							}
 							
 							$this->load->model('extension/payment/paypal');
 							//add order to paypal table
@@ -1670,6 +1660,17 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 							);
 
 							$this->model_extension_payment_paypal->addTransaction($paypal_transaction_data);
+						
+							if (($authorization_status == 'CREATED') || ($authorization_status == 'DENIED') || ($authorization_status == 'PENDING')) {
+								$message = sprintf($this->language->get('text_order_message'), $seller_protection_status);
+				
+								$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $order_status_id, $message);
+							}
+						
+							if (($authorization_status == 'CREATED') || ($authorization_status == 'PARTIALLY_CAPTURED') || ($authorization_status == 'PARTIALLY_CREATED') || ($authorization_status == 'VOIDED') || ($authorization_status == 'PENDING')) {
+								$this->response->redirect($this->url->link('checkout/success', '', true));
+							}
+							
 						}
 					} else {
 						$this->model_extension_module_paypal_smart_button->log($result, 'Capture Order');
@@ -1699,16 +1700,6 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 						
 							if ($capture_status == 'PENDING') {
 								$order_status_id = $setting['order_status']['pending']['id'];
-							}
-						
-							if (($capture_status == 'COMPLETED') || ($capture_status == 'DECLINED') || ($capture_status == 'PENDING')) {
-								$message = sprintf($this->language->get('text_order_message'), $seller_protection_status);
-							
-								$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $order_status_id, $message);
-							}
-						
-							if (($capture_status == 'COMPLETED') || ($capture_status == 'PARTIALLY_REFUNDED') || ($capture_status == 'REFUNDED') || ($capture_status == 'PENDING')) {
-								$this->response->redirect($this->url->link('checkout/success', '', true));
 							}
 							
 							$this->load->model('extension/payment/paypal');
@@ -1742,6 +1733,16 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 							);
 
 							$this->model_extension_payment_paypal->addTransaction($paypal_transaction_data);
+						
+							if (($capture_status == 'COMPLETED') || ($capture_status == 'DECLINED') || ($capture_status == 'PENDING')) {
+								$message = sprintf($this->language->get('text_order_message'), $seller_protection_status);
+							
+								$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $order_status_id, $message);
+							}
+						
+							if (($capture_status == 'COMPLETED') || ($capture_status == 'PARTIALLY_REFUNDED') || ($capture_status == 'REFUNDED') || ($capture_status == 'PENDING')) {
+								$this->response->redirect($this->url->link('checkout/success', '', true));
+							}
 						}
 					}
 				}

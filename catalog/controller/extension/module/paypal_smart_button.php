@@ -624,8 +624,17 @@ class ControllerExtensionModulePayPalSmartButton extends Controller {
 									$this->session->data['shipping_address']['zone_id'] = $zone_info['zone_id'];
 									$this->session->data['shipping_address']['zone'] = $zone_info['name'];
 									$this->session->data['shipping_address']['zone_code'] = $zone_info['code'];
+								} else {
+									$this->log->write('State not found!');
+									$this->log->write($paypal_order_info);
 								}
+							} else {
+								$this->log->write('State not set!');
+								$this->log->write($paypal_order_info);
 							}
+						} else {
+							$this->log->write('Country not set!');
+							$this->log->write($paypal_order_info);
 						}
 					}
 				}
